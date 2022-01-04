@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data>
+        <!--Data item that holds the reminder details-->
+        <variable
+            name="reminderDataItem"
+            type="com.udacity.project4.locationreminders.reminderslist.ReminderDataItem" />
+    </data>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:orientation="vertical"
+        tools:context=".locationreminders.ReminderDescriptionActivity">
+        <!-- DONE: Add the design of the reminder details-->
+
+        <TextView
+            android:id="@+id/details_title"
+            style="@style/Details_Property"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/reminder_title"
+            app:layout_constraintBottom_toTopOf="@+id/reminder_title"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_chainStyle="packed" />
+
+        <TextView
+            android:id="@+id/reminder_title"
+            style="@style/Details_Value"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/reminder_title"
+            android:text="@{reminderDataItem.title}"
+            app:layout_constraintBottom_toTopOf="@+id/details_description"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/details_title"
+            tools:text="Udacity Project" />
+
+        <TextView
+            android:id="@+id/details_description"
+            style="@style/Details_Property"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/reminder_desc"
+            app:layout_constraintBottom_toTopOf="@+id/reminder_description"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/reminder_title" />
+
+        <TextView
+            android:id="@+id/reminder_description"
+            style="@style/Details_Value"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@{reminderDataItem.description}"
+            app:layout_constraintBottom_toTopOf="@+id/details_location"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/details_description"
+            tools:text="Review Location Reminder App" />
+
+        <TextView
+            android:id="@+id/details_location"
+            style="@style/Details_Property"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/reminder_location"
+            app:layout_constraintBottom_toTopOf="@+id/reminder_location"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/reminder_description" />
+
+        <TextView
+            android:id="@+id/reminder_location"
+            style="@style/Details_Value"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@{reminderDataItem.location}"
+            app:layout_constraintBottom_toTopOf="@+id/reminder_latlng"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/details_location"
+            tools:text="Googleplex" />
+
+        <TextView
+            android:id="@+id/reminder_latlng"
+            style="@style/Details_Value"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@{@string/lat_long_snippet(reminderDataItem.latitude,reminderDataItem.longitude)}"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/reminder_location"
+            tools:text="Lat: 37.42216, Lng: -122.08427" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</layout>
