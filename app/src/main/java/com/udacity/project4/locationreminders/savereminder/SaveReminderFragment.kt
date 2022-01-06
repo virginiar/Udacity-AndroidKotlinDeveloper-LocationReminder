@@ -16,7 +16,9 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.databinding.DataBindingUtil
+import androidx.test.core.app.ApplicationProvider.getApplicationContext
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.*
 import com.google.android.material.snackbar.Snackbar
@@ -39,6 +41,16 @@ class SaveReminderFragment : BaseFragment() {
     private lateinit var geofencingClient: GeofencingClient
     private val runningQOrLater =
         android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q
+
+    private val geofencePendingIntent: PendingIntent by lazy {
+        val intent = Intent(contxt, GeofenceBroadcastReceiver::class.java)
+        intent.action = ACTION_GEOFENCE_EVENT
+        PendingIntent.getBroadcast(
+            contxt,
+            0,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT)
+    }
 
     companion object {
         private const val REQUEST_FOREGROUND_AND_BACKGROUND_PERMISSION_RESULT_CODE = 33
@@ -89,7 +101,6 @@ class SaveReminderFragment : BaseFragment() {
             // 2) save the reminder to the local db
             reminderDataItem = ReminderDataItem(title, description, location, latitude, longitude)
             if (_viewModel.validateEnteredData(reminderDataItem)) {
-                _viewModel.validateAndSaveReminder(reminderDataItem)
                 checkPermissionsAndStartGeofencing()
             }
         }
@@ -106,17 +117,28 @@ class SaveReminderFragment : BaseFragment() {
         _viewModel.onClear()
     }
 
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        Log.i(TAG, "onActivityResult reached")
+        if (requestCode == REQUEST_TURN_DEVICE_LOCATION_ON) {
+            // We don't rely on the result code, but just check the location setting again
+            checkDeviceLocationSettingsAndStartGeofence(false)
+        }
+    }
+
     @TargetApi(29)
     private fun foregroundAndBackgroundLocationPermissionApproved(): Boolean {
         val foregroundLocationApproved = (
                 PackageManager.PERMISSION_GRANTED ==
-                        ActivityCompat.checkSelfPermission(contxt,
-                            Manifest.permission.ACCESS_FINE_LOCATION))
+                        contxt.checkSelfPermission(
+                            Manifest.permission.ACCESS_FINE_LOCATION
+                        )
+                )
         val backgroundPermissionApproved =
             if (runningQOrLater) {
                 PackageManager.PERMISSION_GRANTED ==
-                        ActivityCompat.checkSelfPermission(
-                            requireContext(), Manifest.permission.ACCESS_BACKGROUND_LOCATION
+                        contxt.checkSelfPermission(
+                            Manifest.permission.ACCESS_BACKGROUND_LOCATION
                         )
             } else {
                 true
@@ -187,20 +209,26 @@ class SaveReminderFragment : BaseFragment() {
             priority = LocationRequest.PRIORITY_LOW_POWER
         }
         val builder = LocationSettingsRequest.Builder().addLocationRequest(locationRequest)
-        val settingsClient = LocationServices.getSettingsClient(requireContext())
+        val settingsClient = LocationServices.getSettingsClient(contxt)
         val locationSettingsResponseTask =
             settingsClient.checkLocationSettings(builder.build())
         locationSettingsResponseTask.addOnFailureListener { exception ->
             if (exception is ResolvableApiException && resolve){
                 try {
-                    exception.startResolutionForResult(requireActivity(),
-                        REQUEST_TURN_DEVICE_LOCATION_ON)
+                    startIntentSenderForResult(
+                        exception.resolution.intentSender,
+                        REQUEST_TURN_DEVICE_LOCATION_ON,
+                        null,
+                        0,
+                        0,
+                        0,
+                        null)
                 } catch (sendEx: IntentSender.SendIntentException) {
                     Log.d(TAG, "Error getting location settings resolution: " + sendEx.message)
                 }
             } else {
                 Snackbar.make(
-                    requireView(),
+                    binding.saveRemainderLayout,
                     R.string.location_required_error, Snackbar.LENGTH_INDEFINITE
                 ).setAction(android.R.string.ok) {
                     checkDeviceLocationSettingsAndStartGeofence()
@@ -210,23 +238,16 @@ class SaveReminderFragment : BaseFragment() {
         locationSettingsResponseTask.addOnCompleteListener {
             Log.i(TAG,"Location settings response")
             if ( it.isSuccessful ) {
-                addGeofenceForClue()
+                addGeofenceAndSaveRemainder()
             }
         }
     }
 
-    private val geofencePendingIntent: PendingIntent by lazy {
-        val intent = Intent(contxt, GeofenceBroadcastReceiver::class.java)
-        intent.action = ACTION_GEOFENCE_EVENT
-        PendingIntent.getBroadcast(
-            contxt,
-            0,
-            intent,
-            PendingIntent.FLAG_UPDATE_CURRENT)
-    }
 
     @SuppressLint("MissingPermission")
-    private fun addGeofenceForClue() {
+    private fun addGeofenceAndSaveRemainder() {
+        // DONE: use the user entered reminder details to:
+        // 1) add a geofencing request
         val geofence = Geofence.Builder()
             .setRequestId(reminderDataItem.id)
             .setCircularRegion(
@@ -246,9 +267,12 @@ class SaveReminderFragment : BaseFragment() {
         geofencingClient.addGeofences(geofencingRequest, geofencePendingIntent)?.run {
             addOnSuccessListener {
                 Log.d(TAG, "Geofence Location added!!!")
+                // 2) save the reminder to the local db
+                _viewModel.saveReminder(reminderDataItem)
             }
             addOnFailureListener {
                 Log.e(TAG, "Geofence Location failed")
+                _viewModel.showToast.postValue(getString(R.string.geofences_not_added))
             }
         }
     }

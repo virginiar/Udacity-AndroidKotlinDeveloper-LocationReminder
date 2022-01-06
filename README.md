@@ -43,10 +43,11 @@ Explain what each test does and why
 ```
 1.androidTest
         // DONE: Students explain their testing here.
-        a. RemindersDaoTest to test the RemindersDao interface
-        b. RemindersLocalRepositoryTest to test the RemindersLocalRepository class
-        c. ReminderListFragmentTest to test the ReminderListFragment
-        d. RemindersActivityTest to do an end-to-end test
+        a. Added EspressoIdlingResource to the utils directory to handle idling resources
+        b. RemindersDaoTest to test the RemindersDao interface
+        c. RemindersLocalRepositoryTest to test the RemindersLocalRepository class
+        d. ReminderListFragmentTest to test the ReminderListFragment
+        e. RemindersActivityTest to do an end-to-end test
 
 2. test
         // DONE: Students explain their testing here.

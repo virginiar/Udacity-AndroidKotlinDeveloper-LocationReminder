@@ -3,9 +3,9 @@ package com.udacity.project4.locationreminders.data
 import com.udacity.project4.locationreminders.data.dto.ReminderDTO
 import com.udacity.project4.locationreminders.data.dto.Result
 
-//Use FakeDataSource that acts as a test double to the LocalDataSource
+//Use FakeDataSource that acts as a test double to the RemindersDataSource
 class FakeDataSource(
-    private var reminders: MutableList<ReminderDTO>? = mutableListOf()
+    private var reminders: MutableList<ReminderDTO> = mutableListOf()
 ) : ReminderDataSource {
 
     // DONE: Create a fake data source to act as a double to the real data source
@@ -20,25 +20,35 @@ class FakeDataSource(
         if (shouldReturnError) {
             return Result.Error("Test exception")
         }
-        reminders?.let {
-            return Result.Success(ArrayList(it))
+        return try {
+            Result.Success(ArrayList(reminders))
+        } catch (ex: Exception) {
+            Result.Error(ex.localizedMessage)
         }
-        return Result.Error("Reminder list not found")
     }
 
     override suspend fun saveReminder(reminder: ReminderDTO) {
         // DONE: "Save the reminder"
-        reminders?.add(reminder)
+        reminders.add(reminder)
     }
 
     override suspend fun getReminder(id: String): Result<ReminderDTO> {
         // DONE: "Return the reminder with the id"
-        reminders?.firstOrNull{
-            it.id == id
-        }?.let {
-            return Result.Success(it)
+        if (shouldReturnError) {
+            Result.Error("Test exception")
         }
-        return Result.Error("Reminder not found")
+        return try {
+            val reminder = reminders.find {
+                it.id == id
+            }
+            if (reminder != null) {
+                Result.Success(reminder)
+            } else {
+                Result.Error("Reminder not found!")
+            }
+        } catch (e: Exception) {
+            Result.Error(e.localizedMessage)
+        }
     }
 
     override suspend fun deleteAllReminders() {
